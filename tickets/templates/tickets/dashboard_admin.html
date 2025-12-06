@@ -1,0 +1,299 @@
+{% extends "tickets/base.html" %}
+{% block title %}Panel Administrativo - Reparación de PC{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Layout general */
+  .admin-wrapper {
+    min-height: calc(100vh - 80px);
+  }
+
+  /* Sidebar admin */
+  .admin-sidebar {
+    background: #020617;
+    color: #e5e7eb;
+    border-radius: 20px;
+    padding: 20px 18px;
+    box-shadow: 0 20px 40px rgba(15,23,42,.45);
+    min-height: 320px;
+  }
+
+  .admin-sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .admin-sidebar-subtitle {
+    font-size: .85rem;
+    color: #9ca3af;
+    margin-bottom: 20px;
+  }
+
+  .admin-sidebar .list-group-item {
+    background: transparent;
+    color: #e5e7eb;
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .95rem;
+  }
+
+  .admin-sidebar .list-group-item i {
+    font-size: 1rem;
+  }
+
+  .admin-sidebar .list-group-item.active {
+    background: #0f172a;
+    font-weight: 600;
+  }
+
+  .admin-sidebar .list-group-item:hover {
+    background: #020617;
+    text-decoration: none;
+  }
+
+  /* Tarjetas superiores */
+  .admin-stat-card {
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    color: #ffffff;
+  }
+
+  .admin-stat-label {
+    font-size: .85rem;
+    text-transform: uppercase;
+    opacity: .85;
+    letter-spacing: .03em;
+  }
+
+  .admin-stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+
+  .admin-stat-desc {
+    font-size: .85rem;
+    opacity: .9;
+  }
+
+  /* Paneles inferiores */
+  .admin-panel-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(15,23,42,.12);
+  }
+
+  .admin-panel-card .card-header {
+    border-radius: 16px 16px 0 0 !important;
+    background: #0f172a;
+    color: #e5e7eb;
+    font-weight: 600;
+  }
+
+  .badge-estado {
+    font-size: .75rem;
+    border-radius: 999px;
+    padding: 4px 10px;
+  }
+
+  .badge-estado-nuevo {
+    background: #f97316;
+  }
+  .badge-estado-progreso {
+    background: #2563eb;
+  }
+  .badge-estado-cerrado {
+    background: #16a34a;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 admin-wrapper">
+  <div class="row g-4">
+
+    {# =================== SIDEBAR IZQUIERDO =================== #}
+    <div class="col-lg-3">
+      <div class="admin-sidebar">
+
+        <div class="mb-3">
+          <div class="admin-sidebar-title">Panel administrativo</div>
+          <div class="admin-sidebar-subtitle">
+            Navega por las opciones del sistema.
+          </div>
+        </div>
+
+        <div class="list-group">
+          <a href="{% url 'dashboard' %}"
+             class="list-group-item active">
+            <i class="bi bi-speedometer2"></i>
+            Resumen
+          </a>
+
+          <a href="{% url 'lista_tickets' %}"
+             class="list-group-item">
+            <i class="bi bi-tools"></i>
+            Reparaciones
+          </a>
+
+          <a href="{% url 'panel_tecnico' %}"
+             class="list-group-item">
+            <i class="bi bi-hammer"></i>
+            Panel técnico
+          </a>
+
+          {% if user.is_superuser %}
+          <!-- 🔧 AJUSTE REALIZADO AQUÍ -->
+          <a href="{% url 'admin_envios' %}"
+             class="list-group-item">
+            <i class="bi bi-truck"></i>
+            Administrar envíos
+          </a>
+
+          <a href="{% url 'usuarios_panel' %}"
+             class="list-group-item">
+            <i class="bi bi-people-fill"></i>
+            Usuarios
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    {# =================== CONTENIDO PRINCIPAL =================== #}
+    <div class="col-lg-9">
+
+      <h2 class="mb-1">Panel Administrativo</h2>
+      <p class="text-muted mb-4">
+        Resumen del sistema de <strong>Reparación de PC</strong>.
+      </p>
+
+      {# ---- Tarjetas de resumen ---- #}
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="admin-stat-card" style="background: #f97316;">
+            <div class="admin-stat-label">Reparaciones hoy</div>
+            <div class="admin-stat-number">{{ tickets_hoy }}</div>
+            <div class="admin-stat-desc">Ingresadas el día de hoy</div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="admin-stat-card" style="background: #22c55e;">
+            <div class="admin-stat-label">En progreso</div>
+            <div class="admin-stat-number">{{ tickets_en_progreso }}</div>
+            <div class="admin-stat-desc">Equipos en reparación</div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="admin-stat-card" style="background: #3b82f6;">
+            <div class="admin-stat-label">Cerradas</div>
+            <div class="admin-stat-number">{{ tickets_cerrados }}</div>
+            <div class="admin-stat-desc">Reparaciones finalizadas</div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="admin-stat-card" style="background: #a855f7;">
+            <div class="admin-stat-label">Total clientes</div>
+            <div class="admin-stat-number">{{ total_clientes }}</div>
+            <div class="admin-stat-desc">Usuarios registrados</div>
+          </div>
+        </div>
+      </div>
+
+      {# ---- Tablas de abajo ---- #}
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="card admin-panel-card">
+            <div class="card-header">
+              <i class="bi bi-lightning-fill"></i>
+              Reparaciones pendientes
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="text-center">#</th>
+                      <th>Título</th>
+                      <th>Cliente</th>
+                      <th>Estado</th>
+                      <th class="text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for t in tickets_pendientes %}
+                      <tr>
+                        <td class="text-center">#{{ t.id }}</td>
+                        <td>{{ t.titulo }}</td>
+                        <td>{{ t.creado_por.username }}</td>
+                        <td>
+                          {% if t.estado == "nuevo" %}
+                            <span class="badge badge-estado badge-estado-nuevo">Nuevo</span>
+                          {% elif t.estado == "en_progreso" %}
+                            <span class="badge badge-estado badge-estado-progreso">En progreso</span>
+                          {% else %}
+                            <span class="badge badge-estado badge-estado-cerrado">Cerrado</span>
+                          {% endif %}
+                        </td>
+                        <td class="text-center">
+                          <a href="{% url 'detalle_ticket' t.id %}" class="btn btn-sm btn-outline-primary">
+                            Ver
+                          </a>
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="5" class="text-center text-muted py-3">
+                          No hay reparaciones pendientes.
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="card admin-panel-card">
+            <div class="card-header">
+              <i class="bi bi-check2-circle"></i>
+              Últimas reparaciones finalizadas
+            </div>
+            <div class="card-body">
+              {% if tickets_recientes %}
+                <ul class="list-group list-group-flush">
+                  {% for t in tickets_recientes %}
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                      <div>
+                        <div class="fw-semibold">#{{ t.id }} - {{ t.titulo }}</div>
+                        <small class="text-muted">
+                          Cliente: {{ t.creado_por.username }} · {{ t.actualizado_en|date:"d/m/Y H:i" }}
+                        </small>
+                      </div>
+                      <span class="badge bg-success rounded-pill">Cerrado</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="text-muted mb-0">
+                  Aún no hay reparaciones cerradas recientemente.
+                </p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>  {# /col-lg-9 #}
+  </div>  {# /row #}
+</div>  {# /container-fluid #}
+{% endblock %}

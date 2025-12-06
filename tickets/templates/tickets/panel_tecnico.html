@@ -1,0 +1,214 @@
+{% extends "tickets/base.html" %}
+{% block title %}Panel del Técnico{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="row">
+
+    <!-- ============================== -->
+    <!--   PANEL LATERAL ADMIN (NEGRO)  -->
+    <!-- ============================== -->
+    <div class="col-md-3 mb-4">
+      <div class="sidebar-admin p-4"
+           style="
+             background:#020617;
+             color:#f9fafb;
+             border-radius:1.5rem;
+             box-shadow:0 20px 40px rgba(15,23,42,0.6);
+           ">
+        <h5 class="mb-1">Panel administrativo</h5>
+        <small class="text-muted d-block mb-4" style="color:#9ca3af !important;">
+          Navega por las opciones del sistema.
+        </small>
+
+        {% with request.resolver_match.url_name as current %}
+        <div class="mt-2">
+          <!-- Resumen (solo admin) -->
+          {% if request.user.is_superuser %}
+          <a href="{% url 'dashboard' %}"
+             class="d-flex align-items-center px-3 py-2 mb-2 rounded-3 text-decoration-none
+                    {% if current == 'dashboard' %}active-link{% endif %}"
+             style="color:#e5e7eb;">
+            <i class="bi bi-speedometer2 me-2"></i>
+            <span>Resumen</span>
+          </a>
+          {% endif %}
+
+          <!-- Reparaciones -->
+          <a href="{% url 'lista_tickets' %}"
+             class="d-flex align-items-center px-3 py-2 mb-2 rounded-3 text-decoration-none
+                    {% if current == 'lista_tickets' %}active-link{% endif %}"
+             style="color:#e5e7eb;">
+            <i class="bi bi-tools me-2"></i>
+            <span>Reparaciones</span>
+          </a>
+
+          <!-- Panel técnico -->
+          <a href="{% url 'panel_tecnico' %}"
+             class="d-flex align-items-center px-3 py-2 mb-2 rounded-3 text-decoration-none
+                    {% if current == 'panel_tecnico' %}active-link{% endif %}"
+             style="color:#e5e7eb;">
+            <i class="bi bi-hammer me-2"></i>
+            <span>Panel técnico</span>
+          </a>
+
+          <!-- Administrar envíos (solo admin) -->
+          {% if request.user.is_superuser %}
+          <a href="{% url 'admin_envios' %}"
+             class="d-flex align-items-center px-3 py-2 mb-2 rounded-3 text-decoration-none
+                    {% if current == 'admin_envios' %}active-link{% endif %}"
+             style="color:#e5e7eb;">
+            <i class="bi bi-truck me-2"></i>
+            <span>Administrar envíos</span>
+          </a>
+          {% endif %}
+
+          <!-- Usuarios (solo admin) -->
+          {% if request.user.is_superuser %}
+          <a href="{% url 'usuarios_panel' %}"
+             class="d-flex align-items-center px-3 py-2 rounded-3 text-decoration-none
+                    {% if current in 'usuarios_panel usuario_detalle usuario_editar usuario_password' %}active-link{% endif %}"
+             style="color:#e5e7eb;">
+            <i class="bi bi-people-fill me-2"></i>
+            <span>Usuarios</span>
+          </a>
+          {% endif %}
+        </div>
+        {% endwith %}
+      </div>
+    </div>
+
+    <!-- ============================== -->
+    <!--   CONTENIDO PRINCIPAL          -->
+    <!-- ============================== -->
+    <div class="col-md-9">
+
+      <h2 class="mb-2">Panel del Técnico</h2>
+      <p class="text-muted">
+        Aquí puedes gestionar las reparaciones que tienes asignadas y ver el equipo de técnicos.
+      </p>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- ============================== -->
+      <!--   TABLA: REPARACIONES          -->
+      <!-- ============================== -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-wrench"></i> Mis reparaciones asignadas</strong>
+          <span class="small">Técnico: {{ request.user.username }}</span>
+        </div>
+
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width:60px;">#</th>
+                <th>Título</th>
+                <th style="width:180px;">Cliente</th>
+                <th style="width:220px;">Estado</th>
+                <th style="width:110px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in tickets %}
+              <tr>
+                <td>#{{ t.id }}</td>
+                <td>{{ t.titulo }}</td>
+                <td>{{ t.creado_por.username }}</td>
+
+                <td>
+                  <form method="post" class="d-flex align-items-center gap-2 m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="ticket_id" value="{{ t.id }}">
+                    <select name="estado" class="form-select form-select-sm" style="width:auto;">
+                      {% for valor, texto in ESTADO_CHOICES %}
+                      <option value="{{ valor }}" {% if valor == t.estado %}selected{% endif %}>
+                        {{ texto }}
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <!-- IMPORTANTE: name="actualizar_estado" para que lo capture la vista -->
+                    <button type="submit"
+                            name="actualizar_estado"
+                            class="btn btn-sm btn-outline-primary"
+                            title="Actualizar estado">
+                      <i class="bi bi-arrow-repeat"></i>
+                    </button>
+                  </form>
+                </td>
+
+                <td>
+                  <a href="{% url 'detalle_ticket' t.id %}"
+                     class="btn btn-sm btn-outline-secondary">
+                    Ver
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-3 text-muted">
+                  No tienes reparaciones asignadas.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!--   EQUIPO DE TÉCNICOS           -->
+      <!-- ============================== -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white">
+          <strong><i class="bi bi-people-fill"></i> Equipo de técnicos</strong>
+        </div>
+        <div class="card-body p-0">
+          <table class="table mb-0 align-middle">
+            <tbody>
+              {% for tec in tecnicos %}
+              <tr>
+                <td>{{ tec.username }}</td>
+                <td>
+                  {% if tec.is_superuser %}
+                    <span class="badge bg-secondary">ADMIN</span>
+                  {% else %}
+                    <span class="badge bg-info text-dark">TÉCNICO</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if tec == request.user %}
+                    <span class="badge bg-light text-dark">(tú)</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  .sidebar-admin a.active-link {
+    background: #111827 !important;
+    color: #f9fafb !important;
+  }
+  .sidebar-admin a:hover {
+    background: #0f172a;
+    color: #f9fafb;
+  }
+</style>
+
+{% endblock %}

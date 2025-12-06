@@ -1,0 +1,13 @@
+"""
+WSGI config for sistema_tickets project.
+
+It exposes the WSGI callable as a module-level variable named ``application``.
+For Vercel, we also expose it as ``app``.
+"""
+
+import os
+from django.core.wsgi import get_wsgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sistema_tickets.settings')
+
+application = get_wsgi_application()

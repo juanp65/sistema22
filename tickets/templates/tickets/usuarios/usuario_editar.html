@@ -1,0 +1,49 @@
+{% extends "tickets/base.html" %}
+{% block title %}Editar usuario{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h3 class="mb-3">Editar usuario: {{ usuario_obj.username }}</h3>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">{{ form.username.label }}</label>
+        {{ form.username }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">{{ form.email.label }}</label>
+        {{ form.email }}
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">{{ form.first_name.label }}</label>
+        {{ form.first_name }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">{{ form.last_name.label }}</label>
+        {{ form.last_name }}
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">{{ form.rol.label }}</label>
+        {{ form.rol }}
+      </div>
+      <div class="col-md-4 d-flex align-items-center">
+        <div class="form-check mt-3">
+          {{ form.is_active }} <label class="form-check-label">Activo</label>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <a href="{% url 'usuario_detalle' usuario_obj.id %}" class="btn btn-secondary">Volver</a>
+  </form>
+</div>
+{% endblock %}

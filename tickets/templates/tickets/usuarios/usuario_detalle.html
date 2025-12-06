@@ -1,0 +1,92 @@
+{# ruta: tickets/templates/tickets/usuarios/detalle.html #}
+{% extends "tickets/base.html" %}
+{% block title %}Detalle de usuario{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-8 mx-auto">
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+          <span>
+            <i class="bi bi-person-badge"></i>
+            Detalle del usuario: <strong>{{ usuario_obj.username }}</strong>
+          </span>
+          <a href="{% url 'usuarios_panel' %}" class="btn btn-sm btn-outline-light">
+            <i class="bi bi-arrow-left"></i> Volver a la lista
+          </a>
+        </div>
+
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-4">ID</dt>
+            <dd class="col-sm-8">{{ usuario_obj.id }}</dd>
+
+            <dt class="col-sm-4">Username</dt>
+            <dd class="col-sm-8">{{ usuario_obj.username }}</dd>
+
+            <dt class="col-sm-4">Nombre</dt>
+            <dd class="col-sm-8">{{ usuario_obj.first_name|default:"-" }}</dd>
+
+            <dt class="col-sm-4">Apellidos</dt>
+            <dd class="col-sm-8">{{ usuario_obj.last_name|default:"-" }}</dd>
+
+            <dt class="col-sm-4">Correo</dt>
+            <dd class="col-sm-8">{{ usuario_obj.email|default:"-" }}</dd>
+
+            <dt class="col-sm-4">Es staff / técnico</dt>
+            <dd class="col-sm-8">
+              {% if usuario_obj.is_staff %}
+                <span class="badge bg-info text-dark">Sí</span>
+              {% else %}
+                <span class="badge bg-secondary">No</span>
+              {% endif %}
+            </dd>
+
+            <dt class="col-sm-4">Activo</dt>
+            <dd class="col-sm-8">
+              {% if usuario_obj.is_active %}
+                <span class="badge bg-success">Activo</span>
+              {% else %}
+                <span class="badge bg-danger">Inactivo</span>
+              {% endif %}
+            </dd>
+
+            <dt class="col-sm-4">Fecha de registro</dt>
+            <dd class="col-sm-8">
+              {{ usuario_obj.date_joined|date:"d/m/Y H:i" }}
+            </dd>
+
+            <dt class="col-sm-4">Último acceso</dt>
+            <dd class="col-sm-8">
+              {{ usuario_obj.last_login|default:"Nunca" }}
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <a href="{% url 'usuario_editar' usuario_obj.id %}" class="btn btn-primary">
+          <i class="bi bi-pencil-square"></i> Editar rol
+        </a>
+
+        <form method="post"
+              action="{% url 'usuario_eliminar' usuario_obj.id %}"
+              class="d-inline"
+              onsubmit="return confirm('¿Seguro que deseas eliminar este usuario? Esta acción no se puede deshacer.');">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-danger">
+            <i class="bi bi-trash"></i> Eliminar usuario
+          </button>
+        </form>
+
+        <a href="{% url 'usuarios_panel' %}" class="btn btn-outline-secondary ms-auto">
+          Volver a la lista
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

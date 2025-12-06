@@ -1,0 +1,314 @@
+{% extends "tickets/base.html" %}
+{% block title %}Detalle Reparación #{{ ticket.id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+
+  <h4 class="mb-3">Detalle de la Reparación #{{ ticket.id }}</h4>
+
+  <div class="row g-3">
+
+    {# ====================================== #}
+    {#  COLUMNA IZQUIERDA #}
+    {# ====================================== #}
+    <div class="col-lg-8">
+
+      <!-- Información de la reparación -->
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <i class="bi bi-info-circle"></i> Información de la Reparación
+        </div>
+        <div class="card-body">
+          <p><strong>Título:</strong> {{ ticket.titulo }}</p>
+
+          <p>
+            <strong>Prioridad:</strong>
+            <span class="badge bg-warning text-dark">
+              {{ ticket.get_prioridad_display }}
+            </span>
+          </p>
+
+          <p>
+            <strong>Estado:</strong>
+            {% if ticket.estado == "nuevo" %}
+              <span class="badge bg-secondary">Nuevo</span>
+            {% elif ticket.estado == "en_progreso" %}
+              <span class="badge bg-info text-dark">En progreso</span>
+            {% else %}
+              <span class="badge bg-success">Cerrado</span>
+            {% endif %}
+          </p>
+
+          <p class="mb-1"><strong>Descripción del problema:</strong></p>
+          <p class="mb-0">{{ ticket.descripcion|linebreaks }}</p>
+        </div>
+      </div>
+
+      <!-- Información del cliente -->
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <i class="bi bi-person-badge"></i> Información del Cliente
+        </div>
+        <div class="card-body">
+          <p><strong>Nombre usuario:</strong> {{ ticket.creado_por.username }}</p>
+          <p><strong>Email:</strong> {{ ticket.creado_por.email }}</p>
+        </div>
+      </div>
+
+      <!-- Comentarios -->
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <i class="bi bi-chat-square-text"></i> Comentarios / Notas
+        </div>
+        <div class="card-body">
+
+          {% if comentarios %}
+            <ul class="list-group mb-3">
+              {% for c in comentarios %}
+                <li class="list-group-item">
+                  <div class="d-flex justify-content-between">
+                    <strong>{{ c.usuario.username }}</strong>
+                    <small class="text-muted">{{ c.creado_en|date:"d/m/Y H:i" }}</small>
+                  </div>
+                  <p class="mb-1">{{ c.texto|linebreaks }}</p>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">Aún no hay comentarios para esta reparación.</p>
+          {% endif %}
+
+          <form method="post" class="mt-2">
+            {% csrf_token %}
+            {{ comentario_form.texto.label_tag }}
+            {{ comentario_form.texto }}
+            <button type="submit"
+                    name="agregar_comentario"
+                    class="btn btn-primary btn-sm mt-2">
+              Publicar
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="mt-2 mb-4">
+        <a href="{% url 'lista_tickets' %}" class="btn btn-primary">
+          &larr; Volver a las reparaciones
+        </a>
+      </div>
+
+    </div>
+
+    {# ====================================== #}
+    {#  COLUMNA DERECHA #}
+    {# ====================================== #}
+    <div class="col-lg-4">
+
+      {# ==== ESTADO ==== #}
+      {% if request.user.is_superuser %}
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <i class="bi bi-flag"></i> Gestionar Estado
+        </div>
+        <div class="card-body">
+          <p><strong>Estado actual:</strong>
+            {% if ticket.estado == "nuevo" %}
+              <span class="badge bg-secondary">Nuevo</span>
+            {% elif ticket.estado == "en_progreso" %}
+              <span class="badge bg-info text-dark">En progreso</span>
+            {% else %}
+              <span class="badge bg-success">Cerrado</span>
+            {% endif %}
+          </p>
+
+          <form method="post" class="mt-2">
+            {% csrf_token %}
+            <select name="estado" class="form-select form-select-sm mb-2">
+              {% for valor, texto in ESTADO_CHOICES %}
+                <option value="{{ valor }}" {% if valor == ticket.estado %}selected{% endif %}>
+                  {{ texto }}
+                </option>
+              {% endfor %}
+            </select>
+
+            <button type="submit"
+                    class="btn btn-sm btn-primary"
+                    name="cambiar_estado">
+              Guardar estado
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {% else %}
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <i class="bi bi-flag"></i> Estado de la reparación
+        </div>
+        <div class="card-body">
+          <p><strong>Estado actual:</strong>
+            {% if ticket.estado == "nuevo" %}
+              <span class="badge bg-secondary">Nuevo</span>
+            {% elif ticket.estado == "en_progreso" %}
+              <span class="badge bg-info text-dark">En progreso</span>
+            {% else %}
+              <span class="badge bg-success">Cerrado</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ==== ASIGNAR TÉCNICO SOLO ADMIN ==== #}
+      {% if request.user.is_superuser %}
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <i class="bi bi-person-plus"></i> Asignar técnico
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <label class="form-label">Técnico asignado</label>
+            <select name="tecnico_id" class="form-select form-select-sm mb-2">
+              <option value="">-- Seleccionar técnico --</option>
+              {% for tec in tecnicos %}
+                <option value="{{ tec.id }}"
+                  {% if ticket.tecnico_asignado and ticket.tecnico_asignado.id == tec.id %}selected{% endif %}>
+                  {{ tec.username }}
+                </option>
+              {% endfor %}
+            </select>
+
+            <button type="submit"
+                    name="asignar_tecnico"
+                    class="btn btn-sm btn-primary">
+              Guardar técnico
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ==== ENVÍO ==== #}
+      {% if envio %}
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <i class="bi bi-truck"></i> Estado de envío
+        </div>
+        <div class="card-body">
+          <p><strong>Reparación:</strong> #{{ ticket.id }}</p>
+          <p><strong>Estado de envío:</strong></p>
+
+          {% if envio.estado_envio == "pendiente" %}
+            <span class="badge bg-warning text-dark">Preparando tu orden</span>
+          {% elif envio.estado_envio == "despachado" %}
+            <span class="badge bg-info text-dark">Envío entregado</span>
+          {% elif envio.estado_envio == "entregado" %}
+            <span class="badge bg-success">Entregado</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# ==== INFO PAGO + SUBIR COMPROBANTE (SOLO CLIENTE) ==== #}
+      {% if not request.user.is_staff %}
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <i class="bi bi-credit-card"></i> Información de pago
+        </div>
+        <div class="card-body">
+
+          <p><strong>Método de pago:</strong> Transferencia bancaria</p>
+
+          <p class="mb-1"><strong>Banco:</strong> Santander</p>
+          <p class="mb-1"><strong>Tipo de cuenta:</strong> Cuenta corriente</p>
+          <p class="mb-1"><strong>Número de cuenta:</strong> 45-9876543-2</p>
+          <p class="mb-1"><strong>RUT del titular:</strong> 76.543.210-9</p>
+          <p class="mb-3"><strong>Nombre del titular:</strong> Servicio Técnico TechFix</p>
+
+          <div class="alert alert-info">
+            Una vez realizada la transferencia, sube el comprobante y, si es necesario,
+            envíalo también a <strong>pagos@techfix.cl</strong>.
+          </div>
+
+          {% if comprobantes %}
+            <p class="mb-1"><strong>Tus comprobantes enviados:</strong></p>
+            <ul class="list-unstyled mb-2">
+              {% for comp in comprobantes %}
+                {% if comp.subido_por == request.user %}
+                <li class="small mb-1">
+                  {{ comp.creado_en|date:"d/m/Y H:i" }} –
+                  <a href="{{ comp.imagen.url }}" target="_blank">Ver comprobante</a>
+                </li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          {% endif %}
+
+          <hr>
+
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ comprobante_form.imagen.label_tag }}
+            {{ comprobante_form.imagen }}
+
+            <button type="submit"
+                    name="subir_comprobante"
+                    class="btn btn-sm btn-primary mt-2">
+              Subir comprobante
+            </button>
+          </form>
+
+        </div>
+      </div>
+      {% endif %}
+
+      {# ==== COMPROBANTES SOLO PARA SUPERADMIN ==== #}
+      {% if request.user.is_superuser and comprobantes %}
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <i class="bi bi-file-earmark-image"></i> Comprobantes de pago
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled mb-0">
+            {% for comp in comprobantes %}
+              <li class="small mb-1">
+                {{ comp.creado_en|date:"d/m/Y H:i" }} –
+                {{ comp.subido_por.username }} –
+                <a href="{{ comp.imagen.url }}" target="_blank" download>
+                  Ver / descargar
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ==== RESUMEN ==== #}
+      <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <i class="bi bi-clipboard-data"></i> Resumen
+        </div>
+        <div class="card-body">
+          <p><strong>Prioridad:</strong> {{ ticket.get_prioridad_display }}</p>
+          <p><strong>Fecha creación:</strong> {{ ticket.creado_en|date:"d/m/Y H:i" }}</p>
+          <p><strong>Última actualización:</strong> {{ ticket.actualizado_en|date:"d/m/Y H:i" }}</p>
+
+          <p><strong>Técnico asignado:</strong>
+            {% if ticket.tecnico_asignado %}
+              {{ ticket.tecnico_asignado.username }}
+            {% else %}
+              <span class="text-muted">Sin asignar</span>
+            {% endif %}
+          </p>
+
+          <p><strong>Cliente:</strong> {{ ticket.creado_por.username }}</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

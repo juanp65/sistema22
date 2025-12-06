@@ -1,0 +1,138 @@
+{% extends "tickets/base.html" %}
+{% block title %}Crear cuenta{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center mt-5 mb-5">
+  <div class="card shadow-lg" style="max-width: 650px; width: 100%; border-radius: 1.25rem;">
+    <div class="card-header bg-dark text-white" style="border-radius: 1.25rem 1.25rem 0 0;">
+      <h4 class="mb-0">
+        <i class="bi bi-person-plus me-2"></i>
+        Crear una cuenta
+      </h4>
+    </div>
+
+    <div class="card-body p-4">
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="mb-3">
+          {{ form.username.label_tag }}
+          {{ form.username }}
+          {% for error in form.username.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.email.label_tag }}
+          {{ form.email }}
+          {% for error in form.email.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.first_name.label_tag }}
+            {{ form.first_name }}
+            {% for error in form.first_name.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="col-md-6 mb-3">
+            {{ form.last_name.label_tag }}
+            {{ form.last_name }}
+            {% for error in form.last_name.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          {{ form.telefono.label_tag }}
+          {{ form.telefono }}
+          {% for error in form.telefono.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.direccion.label_tag }}
+          {{ form.direccion }}
+          {% for error in form.direccion.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.password.label_tag }}
+          {{ form.password }}
+          <small class="form-text text-muted">
+            La contraseña debe tener al menos 8 caracteres, incluir una letra mayúscula,
+            una letra minúscula y un número.
+          </small>
+          {% for error in form.password.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.password2.label_tag }}
+          {{ form.password2 }}
+          {% for error in form.password2.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <a href="{% url 'login' %}" class="btn btn-outline-secondary">
+            Ya tengo cuenta
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-1"></i> Registrarme
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- =============================== -->
+<!-- VALIDACIONES DIRECTAS EN INPUT -->
+<!-- =============================== -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  // SOLO LETRAS → Nombre y Apellido
+  ["id_first_name", "id_last_name"].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.addEventListener("input", function () {
+        this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, "");
+      });
+    }
+  });
+
+  // SOLO NÚMEROS Y '+' → Teléfono
+  const telInput = document.getElementById("id_telefono");
+  if (telInput) {
+    telInput.addEventListener("input", function () {
+      this.value = this.value.replace(/[^0-9+]/g, "");
+    });
+  }
+
+});
+</script>
+
+{% endblock %}

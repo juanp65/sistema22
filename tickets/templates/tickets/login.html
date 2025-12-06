@@ -1,0 +1,59 @@
+{% extends "tickets/base.html" %}
+{% block title %}Iniciar sesión{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center mt-5 mb-5">
+
+  <div class="card shadow-lg" style="max-width: 550px; width: 100%; border-radius: 1.25rem;">
+    <div class="card-header bg-dark text-white" style="border-radius: 1.25rem 1.25rem 0 0;">
+      <h4 class="mb-0">
+        <i class="bi bi-box-arrow-in-right me-2"></i>
+        Iniciar sesión
+      </h4>
+    </div>
+
+    <div class="card-body p-4">
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="mb-3">
+          {{ form.username.label_tag }}
+          {{ form.username }}
+        </div>
+
+        <div class="mb-1">
+          {{ form.password.label_tag }}
+          {{ form.password }}
+        </div>
+
+        <!-- 🔵 ENLACE QUE SIEMPRE SE VE -->
+        <div class="mt-2 mb-3 text-end">
+          <a href="#" class="small text-decoration-none" style="color:#0d6efd; font-weight: 500;">
+            ¿Olvidaste tu contraseña?
+          </a>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-door-open me-1"></i> Ingresar
+        </button>
+      </form>
+
+      <div class="text-center mt-3">
+        <span class="small">¿No tienes cuenta?
+          <a href="{% url 'registro' %}" class="text-decoration-none">Regístrate aquí.</a>
+        </span>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

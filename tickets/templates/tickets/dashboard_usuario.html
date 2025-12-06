@@ -1,0 +1,104 @@
+{% extends "tickets/base.html" %}
+{% block title %}Reparación de PC{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: calc(100vh - 80px);
+        padding: 20px;
+    }
+
+    .dashboard-card {
+        background: white;
+        padding: 40px 50px;
+        border-radius: 18px;
+        width: 100%;
+        max-width: 480px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        text-align: center;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .dashboard-card h2 {
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: #0a1226;
+        margin-bottom: 8px;
+    }
+
+    .dashboard-card p.subtitle {
+        color: #6c7a92;
+        font-size: 1rem;
+        margin-bottom: 25px;
+    }
+
+    .btn-action {
+        width: 100%;
+        padding: 12px;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .btn-primary-custom {
+        background: #0d6efd;
+        border: none;
+        color: white;
+    }
+    .btn-primary-custom:hover {
+        background: #0a58ca;
+    }
+
+    .btn-outline-custom {
+        background: white;
+        border: 2px solid #0d6efd;
+        color: #0d6efd;
+    }
+    .btn-outline-custom:hover {
+        background: #e7f0ff;
+    }
+
+    .btn-outline-sec {
+        background: white;
+        border: 2px solid #6c757d;
+        color: #495057;
+    }
+    .btn-outline-sec:hover {
+        background: #f2f2f2;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-wrapper">
+    <div class="dashboard-card">
+
+        <h2>Hola, {{ user.first_name|default:user.username }}</h2>
+        <p class="subtitle">Reparación de PC</p>
+
+        <a href="{% url 'crear_ticket' %}" class="btn btn-action btn-primary-custom">
+            Crear nueva solicitud de reparación
+        </a>
+
+        <a href="{% url 'lista_tickets' %}" class="btn btn-action btn-outline-custom">
+            Ver mis reparaciones
+        </a>
+
+        <a href="{% url 'perfil' %}" class="btn btn-action btn-outline-sec">
+            Ver perfil
+        </a>
+
+    </div>
+</div>
+
+{% endblock %}

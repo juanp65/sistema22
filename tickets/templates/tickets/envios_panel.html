@@ -1,0 +1,85 @@
+{% extends "tickets/base.html" %}
+{% block title %}Administrar envíos - Reparación de PC{% endblock %}
+
+{% block extra_css %}
+<style>
+  .envios-wrapper {
+    min-height: calc(100vh - 80px);
+  }
+  .envios-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(15,23,42,.12);
+  }
+  .envios-card .card-header {
+    border-radius: 16px 16px 0 0 !important;
+    background: #0f172a;
+    color: #e5e7eb;
+    font-weight: 600;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 envios-wrapper">
+  <h2 class="mb-1">Administrar envíos</h2>
+  <p class="text-muted mb-4">
+    Gestiona el estado de envío de las reparaciones <strong>cerradas</strong>.
+  </p>
+
+  <div class="card envios-card">
+    <div class="card-header">
+      <i class="bi bi-truck"></i>
+      Envíos de reparaciones cerradas
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="text-center"># Ticket</th>
+              <th>Título</th>
+              <th>Cliente</th>
+              <th>Estado envío</th>
+              <th class="text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for envio in envios %}
+              <tr>
+                <td class="text-center">#{{ envio.ticket.id }}</td>
+                <td>{{ envio.ticket.titulo }}</td>
+                <td>{{ envio.ticket.creado_por.username }}</td>
+                <td>
+                  <form method="post" class="d-flex align-items-center gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="envio_id" value="{{ envio.id }}">
+                    <select name="estado_envio" class="form-select form-select-sm">
+                      {% for value,label in ESTADOS_ENVIO %}
+                        <option value="{{ value }}" {% if envio.estado_envio == value %}selected{% endif %}>
+                          {{ label }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">
+                      Actualizar
+                    </button>
+                  </form>
+                </td>
+                <td class="text-center">
+                  {{ envio.actualizado_en|date:"d/m/Y H:i" }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-3">
+                  No hay reparaciones cerradas con envíos para gestionar.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

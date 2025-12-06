@@ -1,0 +1,201 @@
+{% extends "tickets/base.html" %}
+{% block title %}Gestión de Reparaciones - Reparación de PC{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="row">
+
+    {# ============================== #}
+    {#   PANEL LATERAL ADMIN (NEGRO) #}
+    {# ============================== #}
+    {% if request.user.is_staff %}
+    <div class="col-md-3 mb-4">
+      <div class="sidebar-admin p-4"
+           style="
+              background:#020617;
+              color:#f9fafb;
+              border-radius:1.5rem;
+              box-shadow:0 20px 40px rgba(15,23,42,0.6);
+           ">
+        <h5 class="mb-1">Panel administrativo</h5>
+        <small class="text-muted d-block mb-4" style="color:#9ca3af !important;">
+          Navega por las opciones del sistema.
+        </small>
+
+        <div class="mt-2">
+
+          {# SOLO ADMIN: RESUMEN #}
+          {% if request.user.is_superuser %}
+          <a href="{% url 'dashboard' %}"
+             class="d-flex align-items-center px-3 py-2 mb-2 rounded-3 text-decoration-none
+                    {% if request.resolver_match.url_name == 'dashboard' %}active-link{% endif %}"
+             style="color:#e5e7eb;">
+            <i class="bi bi-speedometer2 me-2"></i>
+            <span>Resumen</span>
+          </a>
+          {% endif %}
+
+          {# TODOS LOS STAFF: REPARACIONES #}
+          <a href="{% url 'lista_tickets' %}"
+             class="d-flex align-items-center px-3 py-2 mb-2 rounded-3 text-decoration-none
+                    {% if request.resolver_match.url_name == 'lista_tickets' %}active-link{% endif %}"
+             style="color:#e5e7eb;">
+            <i class="bi bi-tools me-2"></i>
+            <span>Reparaciones</span>
+          </a>
+
+          {# TODOS LOS STAFF: PANEL TÉCNICO #}
+          <a href="{% url 'panel_tecnico' %}"
+             class="d-flex align-items-center px-3 py-2 mb-2 rounded-3 text-decoration-none
+                    {% if request.resolver_match.url_name == 'panel_tecnico' %}active-link{% endif %}"
+             style="color:#e5e7eb;">
+            <i class="bi bi-wrench-adjustable me-2"></i>
+            <span>Panel técnico</span>
+          </a>
+
+          {# SOLO ADMIN: ADMINISTRAR ENVÍOS #}
+          {% if request.user.is_superuser %}
+          <a href="{% url 'admin_envios' %}"
+             class="d-flex align-items-center px-3 py-2 mb-2 rounded-3 text-decoration-none
+                    {% if request.resolver_match.url_name == 'admin_envios' %}active-link{% endif %}"
+             style="color:#e5e7eb;">
+            <i class="bi bi-truck me-2"></i>
+            <span>Administrar envíos</span>
+          </a>
+          {% endif %}
+
+          {# SOLO ADMIN: USUARIOS #}
+          {% if request.user.is_superuser %}
+          <a href="{% url 'usuarios_panel' %}"
+             class="d-flex align-items-center px-3 py-2 rounded-3 text-decoration-none
+                    {% if request.resolver_match.url_name in 'usuarios_panel usuario_detalle usuario_editar usuario_password' %}
+                      active-link
+                    {% endif %}"
+             style="color:#e5e7eb;">
+            <i class="bi bi-people-fill me-2"></i>
+            <span>Usuarios</span>
+          </a>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ============================== #}
+    {#        CONTENIDO PRINCIPAL    #}
+    {# ============================== #}
+    <div class="{% if request.user.is_staff %}col-md-9{% else %}col-12{% endif %}">
+
+      <h2 class="mb-3">Gestión de Reparaciones</h2>
+
+      {# MENSAJES #}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- ================= Filtros ================= -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <form method="get" class="row g-2 align-items-end">
+
+            <div class="col-md-8">
+              <label class="form-label">Buscar por N° reparación o cliente</label>
+              <input type="text"
+                     name="q"
+                     class="form-control"
+                     placeholder="Ej: #12 o juanp"
+                     value="{{ request.GET.q }}">
+            </div>
+
+            <div class="col-md-2">
+              <label class="form-label">Estado</label>
+              {{ form_filtros.estado }}
+            </div>
+
+            <div class="col-md-2 d-grid">
+              <button type="submit" class="btn btn-primary">
+                Filtrar
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+      <!-- =========== Tabla de reparaciones =========== -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+          <strong>Listado de reparaciones</strong>
+          <span class="small text-muted">Total: {{ tickets|length }} registros</span>
+        </div>
+
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width:70px;">N°</th>
+                <th>Cliente</th>
+                <th>Técnico</th>
+                <th>Fecha</th>
+                <th>Prioridad</th>
+                <th>Estado</th>
+                <th style="width:90px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in tickets %}
+              <tr>
+                <td>
+                  <a href="{% url 'detalle_ticket' t.id %}">#{{ t.id }}</a>
+                </td>
+                <td>{{ t.creado_por.username }}</td>
+                <td>
+                  {% if t.tecnico_asignado %}
+                    {{ t.tecnico_asignado.username }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>{{ t.creado_en|date:"d/m/Y H:i" }}</td>
+                <td>{{ t.get_prioridad_display }}</td>
+                <td>{{ t.get_estado_display }}</td>
+                <td>
+                  <a href="{% url 'detalle_ticket' t.id %}" class="btn btn-sm btn-outline-primary">
+                    Ver
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-3 text-muted">
+                  No hay reparaciones que coincidan con los filtros.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div> <!-- /col principal -->
+
+  </div> <!-- /row -->
+</div> <!-- /container-fluid -->
+
+<style>
+  .sidebar-admin a.active-link {
+    background: #111827 !important;
+    color: #f9fafb !important;
+  }
+  .sidebar-admin a:hover {
+    background: #0f172a;
+    color: #f9fafb;
+  }
+</style>
+{% endblock %}

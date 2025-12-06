@@ -1,0 +1,240 @@
+{% extends "tickets/base.html" %}
+{% block title %}Administrar Envíos - Reparación de PC{% endblock %}
+
+{% block extra_css %}
+<style>
+  .admin-wrapper {
+    min-height: calc(100vh - 80px);
+  }
+
+  /* ===== SIDEBAR ===== */
+  .admin-sidebar {
+    background: #020617;
+    color: #e5e7eb;
+    border-radius: 20px;
+    padding: 20px 18px;
+    box-shadow: 0 20px 40px rgba(15,23,42,.45);
+    min-height: 320px;
+  }
+
+  .admin-sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .admin-sidebar-subtitle {
+    font-size: .85rem;
+    color: #9ca3af;
+    margin-bottom: 20px;
+  }
+
+  .admin-sidebar .list-group-item {
+    background: transparent;
+    color: #e5e7eb;
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .95rem;
+  }
+
+  .admin-sidebar .list-group-item i {
+    font-size: 1rem;
+  }
+
+  .admin-sidebar .list-group-item.active {
+    background: #0f172a;
+    font-weight: 600;
+  }
+
+  .admin-sidebar .list-group-item:hover {
+    background: #020617;
+    text-decoration: none;
+  }
+
+  /* ===== PANEL CENTRAL (similar a Panel Técnico) ===== */
+
+  .panel-box {
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    background: #111827;
+    color: #f3f4f6;
+    padding: 14px 18px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-header i {
+    margin-right: 6px;
+  }
+
+  .badge-envio {
+    font-size: .75rem;
+    border-radius: 10px;
+    padding: 4px 10px;
+    font-weight: 600;
+  }
+
+  .badge-envio-pendiente {
+    background: #f97316; /* naranja */
+  }
+  .badge-envio-despachado {
+    background: #3b82f6; /* azul */
+  }
+  .badge-envio-entregado {
+    background: #16a34a; /* verde */
+  }
+
+  table td {
+    vertical-align: middle;
+  }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 admin-wrapper">
+  <div class="row g-4">
+
+    {# ===== SIDEBAR LATERAL ===== #}
+    <div class="col-lg-3">
+      <div class="admin-sidebar">
+        <div class="mb-3">
+          <div class="admin-sidebar-title">Panel administrativo</div>
+          <div class="admin-sidebar-subtitle">
+            Navega por las opciones del sistema.
+          </div>
+        </div>
+
+        <div class="list-group">
+          <a href="{% url 'dashboard' %}" class="list-group-item">
+            <i class="bi bi-speedometer2"></i>
+            Resumen
+          </a>
+
+          <a href="{% url 'lista_tickets' %}" class="list-group-item">
+            <i class="bi bi-tools"></i>
+            Reparaciones
+          </a>
+
+          <a href="{% url 'panel_tecnico' %}" class="list-group-item">
+            <i class="bi bi-hammer"></i>
+            Panel técnico
+          </a>
+
+          <a href="{% url 'admin_envios' %}" class="list-group-item active">
+            <i class="bi bi-truck"></i>
+            Administrar envíos
+          </a>
+
+          {% if user.is_superuser %}
+          <a href="{% url 'usuarios_panel' %}" class="list-group-item">
+            <i class="bi bi-people-fill"></i>
+            Usuarios
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ===== CONTENIDO PRINCIPAL ===== #}
+    <div class="col-lg-9">
+
+      <h2 class="mb-1">Administrar Envíos</h2>
+      <p class="text-muted mb-3">
+        Aquí puedes gestionar el estado de envío de las reparaciones <strong>cerradas</strong>.
+      </p>
+
+      <div class="panel-box mt-3">
+        <div class="panel-header">
+          <span><i class="bi bi-truck"></i> Envíos de reparaciones</span>
+          <span>Administrador: {{ request.user.username }}</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th># Ticket</th>
+                <th>Título</th>
+                <th>Cliente</th>
+                <th>Estado reparación</th>
+                <th>Estado envío</th>
+                <th class="text-center">Actualizar</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for envio in envios %}
+              <tr>
+                <td>#{{ envio.ticket.id }}</td>
+                <td>{{ envio.ticket.titulo }}</td>
+                <td>{{ envio.ticket.creado_por.username }}</td>
+
+                <td>
+                  {% if envio.ticket.estado == "nuevo" %}
+                    <span class="badge bg-warning text-dark">Nuevo</span>
+                  {% elif envio.ticket.estado == "en_progreso" %}
+                    <span class="badge bg-primary">En progreso</span>
+                  {% else %}
+                    <span class="badge bg-success">Cerrado</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if envio.estado_envio == "pendiente" %}
+                    <span class="badge-envio badge-envio-pendiente">Preparando</span>
+                  {% elif envio.estado_envio == "despachado" %}
+                    <span class="badge-envio badge-envio-despachado">Despachado</span>
+                  {% else %}
+                    <span class="badge-envio badge-envio-entregado">Entregado</span>
+                  {% endif %}
+                </td>
+
+                <td class="text-center">
+                  <form method="post" class="d-flex align-items-center justify-content-center">
+                    {% csrf_token %}
+                    <input type="hidden" name="envio_id" value="{{ envio.id }}">
+
+                    <select name="estado_envio" class="form-select form-select-sm me-2" style="max-width:160px;">
+                      {% for value,label in ESTADO_ENVIO_CHOICES %}
+                      <option value="{{ value }}" {% if envio.estado_envio == value %}selected{% endif %}>
+                        {{ label }}
+                      </option>
+                      {% endfor %}
+                    </select>
+
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                      <i class="bi bi-arrow-repeat"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                  No hay reparaciones cerradas con envío registrado.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+
+          </table>
+        </div>
+      </div>
+
+    </div> {# /col-lg-9 #}
+  </div> {# /row #}
+</div> {# /container-fluid #}
+{% endblock %}

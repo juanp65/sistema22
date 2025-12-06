@@ -1,0 +1,232 @@
+{% extends "tickets/base.html" %}
+{% block title %}Gestión de usuarios - Reparación de PC{% endblock %}
+
+{% block extra_css %}
+<style>
+  .admin-wrapper {
+    min-height: calc(100vh - 80px);
+  }
+
+  /* === SIDEBAR ADMIN === */
+  .admin-sidebar {
+    background: #020617;
+    color: #e5e7eb;
+    border-radius: 20px;
+    padding: 20px 18px;
+    box-shadow: 0 20px 40px rgba(15,23,42,.45);
+    min-height: 320px;
+  }
+
+  .admin-sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .admin-sidebar-subtitle {
+    font-size: .85rem;
+    color: #9ca3af;
+    margin-bottom: 20px;
+  }
+
+  .admin-sidebar .list-group-item {
+    background: transparent;
+    color: #e5e7eb;
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .95rem;
+  }
+
+  .admin-sidebar .list-group-item i {
+    font-size: 1rem;
+  }
+
+  .admin-sidebar .list-group-item.active {
+    background: #0f172a;
+    font-weight: 600;
+  }
+
+  .admin-sidebar .list-group-item:hover {
+    background: #020617;
+    text-decoration: none;
+  }
+
+  /* === TABLA === */
+  .users-card {
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(15,23,42,.12);
+  }
+
+  .users-card .card-header {
+    border-radius: 16px 16px 0 0 !important;
+    background: #020617;
+    color: #e5e7eb;
+    font-weight: 600;
+  }
+
+  .users-table thead {
+    background: #0f172a;
+    color: #e5e7eb;
+  }
+
+  .users-table th {
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .badge-rol {
+    border-radius: 999px;
+    font-size: .75rem;
+    padding: 4px 10px;
+  }
+
+  .badge-rol-admin {
+    background: #7c3aed;
+  }
+
+  .badge-rol-tecnico {
+    background: #2563eb;
+  }
+
+  .badge-rol-usuario {
+    background: #6b7280;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 admin-wrapper">
+  <div class="row g-4">
+
+    {# ================== SIDEBAR IZQUIERDO ================== #}
+    <div class="col-lg-3">
+      <div class="admin-sidebar">
+
+        <div class="mb-3">
+          <div class="admin-sidebar-title">Panel administrativo</div>
+          <div class="admin-sidebar-subtitle">
+            Navega por las opciones del sistema.
+          </div>
+        </div>
+
+        {% with request.resolver_match.url_name as current %}
+        <div class="list-group">
+
+          <a href="{% url 'dashboard' %}"
+             class="list-group-item {% if current == 'dashboard' %}active{% endif %}">
+            <i class="bi bi-speedometer2"></i>
+            Resumen
+          </a>
+
+          <a href="{% url 'lista_tickets' %}"
+             class="list-group-item {% if current == 'lista_tickets' %}active{% endif %}">
+            <i class="bi bi-tools"></i>
+            Reparaciones
+          </a>
+
+          <a href="{% url 'panel_tecnico' %}"
+             class="list-group-item {% if current == 'panel_tecnico' %}active{% endif %}">
+            <i class="bi bi-hammer"></i>
+            Panel técnico
+          </a>
+
+          <a href="{% url 'admin_envios' %}"
+             class="list-group-item {% if current == 'admin_envios' %}active{% endif %}">
+            <i class="bi bi-truck"></i>
+            Administrar envíos
+          </a>
+
+          <a href="{% url 'usuarios_panel' %}"
+             class="list-group-item {% if current == 'usuarios_panel' %}active{% endif %}">
+            <i class="bi bi-people-fill"></i>
+            Usuarios
+          </a>
+
+        </div>
+        {% endwith %}
+
+      </div>
+    </div>
+
+    {# ================== CONTENIDO PRINCIPAL ================== #}
+    <div class="col-lg-9">
+
+      <h2 class="mb-1">Gestión de usuarios</h2>
+      <p class="text-muted mb-4">
+        Lista de usuarios registrados en el sistema.
+      </p>
+
+      <div class="card users-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-people-fill"></i> Usuarios del sistema</span>
+          <span class="small text-light-50">
+            Total: {{ usuarios|length }}
+          </span>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0 users-table align-middle">
+              <thead>
+                <tr>
+                  <th class="text-center">ID</th>
+                  <th>Usuario</th>
+                  <th>Nombre</th>
+                  <th>Correo</th>
+                  <th class="text-center">Rol</th>
+                  <th class="text-center">Activo</th>
+                  <th class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in usuarios %}
+                  <tr>
+                    <td class="text-center">{{ u.id }}</td>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.first_name }} {{ u.last_name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td class="text-center">
+                      {% if u.is_superuser %}
+                        <span class="badge badge-rol badge-rol-admin">Admin</span>
+                      {% elif u.is_staff %}
+                        <span class="badge badge-rol badge-rol-tecnico">Técnico</span>
+                      {% else %}
+                        <span class="badge badge-rol badge-rol-usuario">Usuario</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-center">
+                      {% if u.is_active %}
+                        <span class="badge bg-success rounded-pill">Sí</span>
+                      {% else %}
+                        <span class="badge bg-secondary rounded-pill">No</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-center">
+                      <a href="{% url 'usuario_detalle' u.id %}"
+                         class="btn btn-sm btn-outline-primary">
+                        Ver
+                      </a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="7" class="text-center text-muted py-3">
+                      No hay usuarios registrados.
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div> 
+  </div>
+</div>
+{% endblock %}

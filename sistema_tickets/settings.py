@@ -27,6 +27,17 @@ ALLOWED_HOSTS = os.getenv(
     "127.0.0.1,localhost,.onrender.com"
 ).split(",")
 
+# CSRF TRUSTRD ORIGINS (para formularios cuando DEBUG=False)
+# En Render crea la variable CSRF_TRUSTED_ORIGINS con:
+# https://sistema22.onrender.com
+_raw_csrf = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+if _raw_csrf:
+    CSRF_TRUSTED_ORIGINS = [
+        origin.strip() for origin in _raw_csrf.split(",") if origin.strip()
+    ]
+else:
+    CSRF_TRUSTED_ORIGINS = []
+
 
 # -------------------------------
 # APLICACIONES INSTALADAS
@@ -88,20 +99,22 @@ WSGI_APPLICATION = 'sistema_tickets.wsgi.application'
 # BASE DE DATOS
 # -------------------------------
 # - En tu PC: usas SQLite (db.sqlite3).
-# - En Render: creas un PostgreSQL y Render te da una DATABASE_URL.
-#   La pones como variable de entorno y este bloque la usará automáticamente.
+# - En Render: usas Postgres con la variable DATABASE_URL
+#   (usa la Internal Database URL de Render).
 
-if os.getenv("DATABASE_URL"):
-    # Configuración para producción (PostgreSQL u otro motor vía URL)
+db_url = os.getenv("DATABASE_URL")
+
+if db_url:
+    # Producción (Render, Postgres)
     DATABASES = {
         "default": dj_database_url.config(
-            default=os.getenv("DATABASE_URL"),
+            default=db_url,
             conn_max_age=600,   # mantiene conexiones abiertas
-            ssl_require=True,   # Render suele usar SSL en Postgres
+            ssl_require=False,  # con Internal URL no hace falta SSL
         )
     }
 else:
-    # Configuración local (SQLite)
+    # Desarrollo local (SQLite)
     DATABASES = {
         "default": {
             'ENGINE': 'django.db.backends.sqlite3',

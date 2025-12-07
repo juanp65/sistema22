@@ -315,36 +315,71 @@ def panel_tecnico_view(request):
         return redirect("dashboard")
 
     # ---------------------------------------
-    # CAMBIAR ESTADO DESDE PANEL TÉCNICO
-    # (ADMIN O TÉCNICO ASIGNADO)
+    # POST: CAMBIAR ESTADO O TÉCNICO
     # ---------------------------------------
     if request.method == "POST":
         ticket_id = request.POST.get("ticket_id")
-        nuevo_estado = request.POST.get("estado")
-
+        accion = request.POST.get("accion")  # puede ser None (compatibilidad)
         ticket = get_object_or_404(Ticket, id=ticket_id)
 
-        # Si NO es superuser, validar que el ticket esté asignado a ese técnico
-        if not request.user.is_superuser and ticket.tecnico_asignado != request.user:
-            messages.error(request, "No puedes modificar esta reparación.")
+        # ----------------- CAMBIAR TÉCNICO (solo admin) -----------------
+        if accion == "cambiar_tecnico":
+            if not request.user.is_superuser:
+                messages.error(request, "Solo el administrador puede reasignar técnicos.")
+                return redirect("panel_tecnico")
+
+            tec_id = request.POST.get("tecnico_id")
+            if tec_id:
+                tecnico = get_object_or_404(User, id=tec_id, is_staff=True)
+                ticket.tecnico_asignado = tecnico
+                ticket.save()
+
+                AsignacionCliente.objects.get_or_create(
+                    tecnico=tecnico,
+                    cliente=ticket.creado_por,
+                )
+                messages.success(
+                    request,
+                    f"Técnico actualizado para la reparación #{ticket.id}.",
+                )
+            else:
+                ticket.tecnico_asignado = None
+                ticket.save()
+                messages.success(
+                    request,
+                    f"Técnico desasignado para la reparación #{ticket.id}.",
+                )
             return redirect("panel_tecnico")
 
-        if nuevo_estado in dict(Ticket.ESTADO_CHOICES):
-            ticket.estado = nuevo_estado
-            ticket.save()
+        # ----------------- CAMBIAR ESTADO (admin o técnico asignado) ----
+        # Si no se envió "accion", asumimos que es cambiar estado
+        if accion is None or accion == "cambiar_estado":
+            nuevo_estado = request.POST.get("estado")
 
-            if nuevo_estado == "cerrado":
-                Envio.objects.get_or_create(ticket=ticket)
+            # Si NO es superuser, validar que el ticket esté asignado a ese técnico
+            if not request.user.is_superuser and ticket.tecnico_asignado != request.user:
+                messages.error(request, "No puedes modificar esta reparación.")
+                return redirect("panel_tecnico")
+
+            if nuevo_estado in dict(Ticket.ESTADO_CHOICES):
+                ticket.estado = nuevo_estado
+                ticket.save()
+
+                if nuevo_estado == "cerrado":
+                    Envio.objects.get_or_create(ticket=ticket)
+                else:
+                    Envio.objects.filter(ticket=ticket).delete()
+
+                messages.success(
+                    request,
+                    f"Estado de la reparación #{ticket.id} actualizado a '{nuevo_estado}'.",
+                )
             else:
-                Envio.objects.filter(ticket=ticket).delete()
+                messages.error(request, "Estado no válido.")
 
-            messages.success(
-                request,
-                f"Estado de la reparación #{ticket.id} actualizado a '{nuevo_estado}'.",
-            )
-        else:
-            messages.error(request, "Estado no válido.")
+            return redirect("panel_tecnico")
 
+        # Si llega otra cosa, simplemente redirigimos
         return redirect("panel_tecnico")
 
     # ---------------------------------------
